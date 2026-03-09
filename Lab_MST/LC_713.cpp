@@ -2,17 +2,17 @@
 
 // Brute Force Approach
 // Time Complexity: O(N^2)
-class SolutionBrute {
+class Solution {
 public:
     int numSubarrayProductLessThanK(vector<int>& nums, int k) {
-        int count=0;
-        for(int i=0;i<nums.size();i++){
-            int product=1;
-            for(int j=i;j<nums.size();j++){
-                product*=nums[j];
-                if(product<k){
+        int count = 0;
+        for (int i = 0; i < nums.size(); i++) {
+            int product = 1;
+            for (int j = i; j < nums.size(); j++) {
+                product *= nums[j];
+                if (product < k) {
                     count++;
-                } else{
+                } else {
                     break;
                 }
             }
@@ -27,20 +27,21 @@ public:
 class Solution {
 public:
     int numSubarrayProductLessThanK(vector<int>& nums, int k) {
-        if(k<=1){
+        if (k <= 1) {
             return 0;
         }
-        int count=0;
-        int l=0;
-        long long product=1;
-        for(int i=0;i<nums.size();i++){
-            product*=nums[i];
-            while(product>=k){
-                product/=nums[l];
+        int count = 0;
+        int l = 0;
+        long long product = 1;
+        for (int i = 0; i < nums.size(); i++) {
+            product *= nums[i];
+            while (product >= k) {
+                product /= nums[l];
                 l++;
             }
-            count += (i-l+1);
+            count += (i - l + 1);
         }
         return count;
     }
 };
+
