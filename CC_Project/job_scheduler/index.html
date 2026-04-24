@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Job Scheduling System</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #f4f5f7;
+      color: #1a1a2e;
+      min-height: 100vh;
+    }
+
+    /* header */
+    .topbar {
+      background: #1a1a2e;
+      color: #fff;
+      padding: 18px 40px;
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+    }
+    .topbar h1 { font-size: 1.15rem; font-weight: 600; letter-spacing: 0.3px; }
+    .topbar span {
+      font-size: 0.75rem;
+      color: #8888aa;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* layout */
+    .page {
+      max-width: 1080px;
+      margin: 32px auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    /* panel */
+    .panel {
+      background: #fff;
+      border: 1px solid #e2e4e9;
+      border-radius: 10px;
+      padding: 22px;
+    }
+    .panel + .panel { margin-top: 18px; }
+
+    .panel-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+
+    /* form */
+    .field { margin-bottom: 12px; }
+    .field label {
+      display: block;
+      font-size: 0.78rem;
+      color: #555;
+      margin-bottom: 5px;
+    }
+    .field input {
+      width: 100%;
+      padding: 8px 11px;
+      border: 1px solid #d8dae0;
+      border-radius: 6px;
+      font-size: 0.88rem;
+      color: #1a1a2e;
+      background: #fafafa;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus { border-color: #4f46e5; background: #fff; }
+
+    /* buttons */
+    .btn {
+      display: inline-block;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.84rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s, transform 0.1s;
+    }
+    .btn:hover { opacity: 0.88; }
+    .btn:active { transform: scale(0.98); }
+    .btn-block { width: 100%; text-align: center; }
+
+    .btn-primary  { background: #4f46e5; color: #fff; }
+    .btn-outline  { background: transparent; color: #555; border: 1px solid #d8dae0; }
+    .btn-outline:hover { background: #f4f5f7; }
+    .btn-red      { background: transparent; color: #c0392b; border: 1px solid #f0c0bb; font-size: 0.76rem; padding: 4px 10px; }
+    .btn-red:hover { background: #fdf0ef; }
+    .btn-green    { background: #16a34a; color: #fff; }
+
+    .btn-row { display: flex; gap: 8px; margin-top: 14px; }
+
+    /* info box */
+    .info-box {
+      background: #f8f8ff;
+      border-left: 3px solid #4f46e5;
+      border-radius: 0 6px 6px 0;
+      padding: 12px 14px;
+      font-size: 0.8rem;
+      color: #444;
+      line-height: 1.7;
+    }
+    .info-box b { color: #1a1a2e; }
+
+    /* table */
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    thead th {
+      text-align: left;
+      padding: 9px 12px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #888;
+      border-bottom: 2px solid #f0f0f0;
+    }
+    tbody tr { border-bottom: 1px solid #f5f5f5; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #fafbff; }
+    tbody td { padding: 9px 12px; color: #333; }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .tag-id      { background: #ede9fe; color: #4f46e5; }
+    .tag-ok      { background: #dcfce7; color: #16a34a; }
+    .tag-skip    { background: #fee2e2; color: #c0392b; }
+
+    .empty { text-align: center; color: #aaa; padding: 28px; font-size: 0.84rem; }
+
+    /* stats */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .stat {
+      background: #fff;
+      border: 1px solid #e2e4e9;
+      border-radius: 10px;
+      padding: 16px;
+      text-align: center;
+    }
+    .stat .num { font-size: 1.9rem; font-weight: 700; color: #4f46e5; }
+    .stat .lbl { font-size: 0.72rem; color: #888; margin-top: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* gantt */
+    .gantt-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .g-block {
+      padding: 10px 14px;
+      border-radius: 7px;
+      font-size: 0.78rem;
+      min-width: 72px;
+      text-align: center;
+      border: 1px solid;
+      animation: fadeUp 0.3s ease forwards;
+      opacity: 0;
+    }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .g-block .g-name   { font-weight: 600; margin-bottom: 3px; }
+    .g-block .g-detail { font-size: 0.7rem; opacity: 0.7; }
+
+    /* toast */
+    #toast {
+      position: fixed; bottom: 24px; right: 24px;
+      padding: 10px 18px; border-radius: 7px;
+      font-size: 0.84rem; font-weight: 500;
+      opacity: 0; transition: opacity 0.25s;
+      pointer-events: none; z-index: 100;
+    }
+    #toast.show { opacity: 1; }
+    #toast.ok  { background: #1a1a2e; color: #fff; }
+    #toast.err { background: #c0392b; color: #fff; }
+
+    #result-section { display: none; }
+
+    @media (max-width: 720px) {
+      .page { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1>Job Scheduling System</h1>
+  <span>Greedy Algorithm — DAA</span>
+</div>
+
+<div class="page">
+
+  <!-- LEFT -->
+  <div>
+    <div class="panel">
+      <div class="panel-title">Add Job</div>
+
+      <div class="field">
+        <label>Job Name</label>
+        <input type="text" id="jobName" placeholder="e.g. Task-A" />
+      </div>
+      <div class="field">
+        <label>Deadline (time unit)</label>
+        <input type="number" id="jobDeadline" placeholder="e.g. 2" min="1" />
+      </div>
+      <div class="field">
+        <label>Profit</label>
+        <input type="number" id="jobProfit" placeholder="e.g. 100" min="1" />
+      </div>
+
+      <button class="btn btn-primary btn-block" style="margin-top:6px" onclick="addJob()">Add Job</button>
+
+      <div class="btn-row">
+        <button class="btn btn-outline" style="flex:1" onclick="loadSample()">Load Sample</button>
+        <button class="btn btn-outline" style="flex:1" onclick="clearAll()">Clear All</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Algorithm Info</div>
+      <div class="info-box">
+        <b>Strategy:</b> Pick highest-profit job first using a Max-Heap, assign to latest free slot within deadline.<br><br>
+        <b>Data Structure:</b> Priority Queue (Max-Heap)<br>
+        <b>Complexity:</b> O(n log n)<br>
+        <b>Goal:</b> Maximize total profit.
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div>
+    <div class="panel">
+      <div class="panel-title">Job Pool</div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Name</th><th>Deadline</th><th>Profit</th><th></th></tr>
+          </thead>
+          <tbody id="jobTableBody">
+            <tr><td colspan="5" class="empty">No jobs added yet.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn btn-green btn-block" onclick="runScheduler()">Run Scheduler</button>
+      </div>
+    </div>
+
+    <div id="result-section">
+      <div class="stats">
+        <div class="stat"><div class="num" id="s-scheduled">0</div><div class="lbl">Scheduled</div></div>
+        <div class="stat"><div class="num" id="s-profit">0</div><div class="lbl">Total Profit</div></div>
+        <div class="stat"><div class="num" id="s-skipped">0</div><div class="lbl">Skipped</div></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Gantt Chart</div>
+        <div class="gantt-row" id="ganttChart"></div>
+      </div>
+
+      <div class="panel" style="margin-top:18px">
+        <div class="panel-title">Schedule Result</div>
+        <div class="tbl-wrap">
+          <table>
+            <thead>
+              <tr><th>Slot</th><th>ID</th><th>Name</th><th>Deadline</th><th>Profit</th><th>Status</th></tr>
+            </thead>
+            <tbody id="resultBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+  let jobs = [], nextId = 1;
+
+  const PALETTE = [
+    { bg: '#ede9fe', border: '#7c3aed', text: '#4c1d95' },
+    { bg: '#dbeafe', border: '#2563eb', text: '#1e3a8a' },
+    { bg: '#dcfce7', border: '#16a34a', text: '#14532d' },
+    { bg: '#fef9c3', border: '#ca8a04', text: '#713f12' },
+    { bg: '#fee2e2', border: '#dc2626', text: '#7f1d1d' },
+    { bg: '#fce7f3', border: '#db2777', text: '#831843' },
+    { bg: '#e0f2fe', border: '#0284c7', text: '#0c4a6e' },
+    { bg: '#f0fdf4', border: '#15803d', text: '#14532d' },
+  ];
+
+  function toast(msg, type = 'ok') {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `show ${type}`;
+    setTimeout(() => t.className = '', 2200);
+  }
+
+  function addJob() {
+    const name     = document.getElementById('jobName').value.trim() || `Job-${nextId}`;
+    const deadline = parseInt(document.getElementById('jobDeadline').value);
+    const profit   = parseInt(document.getElementById('jobProfit').value);
+    if (!deadline || deadline < 1) { toast('Deadline must be >= 1', 'err'); return; }
+    if (!profit   || profit   < 1) { toast('Profit must be positive', 'err'); return; }
+    jobs.push({ id: nextId++, name, deadline, profit });
+    renderTable();
+    document.getElementById('jobName').value = '';
+    document.getElementById('jobDeadline').value = '';
+    document.getElementById('jobProfit').value = '';
+    document.getElementById('jobName').focus();
+    toast(`"${name}" added`);
+  }
+
+  function removeJob(id) {
+    jobs = jobs.filter(j => j.id !== id);
+    renderTable();
+    toast('Job removed', 'err');
+  }
+
+  function renderTable() {
+    const tb = document.getElementById('jobTableBody');
+    if (!jobs.length) {
+      tb.innerHTML = `<tr><td colspan="5" class="empty">No jobs added yet.</td></tr>`;
+      return;
+    }
+    tb.innerHTML = jobs.map(j => `
+      <tr>
+        <td><span class="tag tag-id">${j.id}</span></td>
+        <td>${j.name}</td>
+        <td>${j.deadline}</td>
+        <td>${j.profit}</td>
+        <td><button class="btn btn-red" onclick="removeJob(${j.id})">Remove</button></td>
+      </tr>`).join('');
+  }
+
+  function runScheduler() {
+    if (!jobs.length) { toast('Add jobs first', 'err'); return; }
+
+    const sorted  = [...jobs].sort((a, b) => b.profit - a.profit);
+    const maxD    = Math.max(...jobs.map(j => j.deadline));
+    const slot    = new Array(maxD + 1).fill(-1);
+    const done    = [], skip = [];
+
+    for (const job of sorted) {
+      let placed = false;
+      for (let t = job.deadline; t >= 1; t--) {
+        if (slot[t] === -1) { slot[t] = job.id; done.push({ ...job, timeSlot: t }); placed = true; break; }
+      }
+      if (!placed) skip.push(job);
+    }
+
+    done.sort((a, b) => a.timeSlot - b.timeSlot);
+    const totalProfit = done.reduce((s, j) => s + j.profit, 0);
+
+    document.getElementById('s-scheduled').textContent = done.length;
+    document.getElementById('s-profit').textContent    = totalProfit;
+    document.getElementById('s-skipped').textContent   = skip.length;
+
+    document.getElementById('ganttChart').innerHTML = done.map((j, i) => {
+      const c = PALETTE[i % PALETTE.length];
+      return `<div class="g-block" style="background:${c.bg};border-color:${c.border};color:${c.text};animation-delay:${i*0.07}s">
+        <div class="g-name">${j.name}</div>
+        <div class="g-detail">Slot ${j.timeSlot} &nbsp;|&nbsp; ${j.profit}</div>
+      </div>`;
+    }).join('');
+
+    const rows = [
+      ...done.map(j => `<tr>
+        <td>${j.timeSlot}</td>
+        <td><span class="tag tag-id">${j.id}</span></td>
+        <td>${j.name}</td><td>${j.deadline}</td><td>${j.profit}</td>
+        <td><span class="tag tag-ok">Scheduled</span></td></tr>`),
+      ...skip.map(j => `<tr>
+        <td>—</td>
+        <td><span class="tag tag-id">${j.id}</span></td>
+        <td>${j.name}</td><td>${j.deadline}</td><td>${j.profit}</td>
+        <td><span class="tag tag-skip">Skipped</span></td></tr>`)
+    ];
+    document.getElementById('resultBody').innerHTML = rows.join('');
+
+    document.getElementById('result-section').style.display = 'block';
+    document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
+    toast(`Done — ${done.length} scheduled, profit ${totalProfit}`);
+  }
+
+  function loadSample() {
+    jobs = []; nextId = 1;
+    [['Task-A',2,100],['Task-B',1,19],['Task-C',2,27],
+     ['Task-D',1,25],['Task-E',3,15],['Task-F',3,50],['Task-G',2,60]]
+    .forEach(([name,deadline,profit]) => jobs.push({ id: nextId++, name, deadline, profit }));
+    renderTable();
+    document.getElementById('result-section').style.display = 'none';
+    toast('Sample data loaded');
+  }
+
+  function clearAll() {
+    jobs = []; nextId = 1;
+    renderTable();
+    document.getElementById('result-section').style.display = 'none';
+    toast('Cleared', 'err');
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Enter') addJob(); });
+</script>
+</body>
+</html>
